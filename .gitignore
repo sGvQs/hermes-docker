@@ -1,0 +1,18 @@
+# Secrets - .envはコミットしない
+.env
+
+# Ollamaのモデル（巨大なのでコミットしない）
+models/*
+!models/.gitkeep
+
+# Hermesのデータディレクトリ
+~/.hermes
+.hermes/
+
+# Docker
+*.tar
+*.tar.gz
+
+# OS
+.DS_Store
+Thumbs.db

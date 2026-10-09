@@ -1,0 +1,59 @@
+# Hermes Agent + SearXNG + Telegram (Docker Compose)
+# ===================================================
+# 完全ローカル・ゼロAPIコスト｜Telegram連携対応
+# Mac miniホストのOllamaを使う（オプションB）
+#
+# 前提条件:
+#   - Docker Desktop or Docker Engine installed
+#   - 8GB+ RAM recommended (16GB better for gemma4)
+#   - Telegram BotToken (BotFatherから取得)
+#   - Mac miniにOllamaがインストール済み（ollama listで確認）
+#
+# Usage:
+#   $ cd ~Documents/Workspace/hermes-docker
+#   $ docker compose up -d
+#   $ # Telegram Botをチェック（userinfobotからIDを取得）:
+#   $ # .env ファイルを編集して正しい値を入力
+
+services:
+
+    # ========== SearXNG (Meta Search) ============
+  searxng:
+      image: searxng/searxng:latest
+      container_name: hermes-searxng
+      ports:
+         - "8080:8080"
+      volumes:
+         - "./searxng-settings:/etc/searxng"  # 設定ファイルを永続化
+      environment:
+         - SEARXNG_BASE_URL=http://localhost:8080/
+         - SEARXNG_SECRET_KEY=$(openssl rand -hex 32)
+      restart: unless-stopped
+
+    # ========== Hermes Agent ============
+  agent:
+      image: nousresearch/hermes-agent:latest
+      container_name: hermes-agent
+      command: gateway run                  # 必須：gatewayモードで起動
+      ports:
+         - "127.0.0.1:9119:9119"        # Dashboard (local only)
+         - "8642:8642"                    # API Gateway
+      volumes:
+       - "${HOME}/.hermes:/opt/data"
+       - "${HOME}/.hermes/credentials:/opt/data/credentials"  # Telegramペアリングに必須
+      extra_hosts:
+        - "host.docker.internal:host-gateway"  # macOS用
+      environment:
+        - HERMES_DASHBOARD=1
+        - HERMES_PROFILE=docker
+        - DASHBOARD_HOST=127.0.0.1
+        # Mac miniのホストOllamaにアクセス:
+        - HERMES_PROVIDER_URL=http://host.docker.internal:11434/v1
+        # SearXNG 検索用（container名で接続）:
+        - SEARXNG_URL=http://searxng:8080
+        - HERMES_API_TIMEOUT=1800
+        # Telegram接続用（.env ファイルから自動読み取り）:
+        - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+        - TELEGRAM_ALLOWED_USERS=${TELEGRAM_ALLOWED_USERS}
+      depends_on:
+         - searxng
