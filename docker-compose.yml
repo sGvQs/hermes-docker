@@ -39,11 +39,13 @@ services:
          - "127.0.0.1:9119:9119"        # Dashboard (local only)
          - "8642:8642"                    # API Gateway
       volumes:
-       - "${HOME}/.hermes:/opt/data"
-       - "${HOME}/.hermes/credentials:/opt/data/credentials"  # Telegramペアリングに必須
+       - "${HOME}/.hermes:/opt/data"                    # 基本設定ファイル（credentials含む）                                                                                            
+       - "${HOME}/scripts:/root/scripts" 
+       - "${HOME}/Documents/ai-workspace:/root/workspaces" 
       extra_hosts:
         - "host.docker.internal:host-gateway"  # macOS用
       environment:
+        - TERMINAL_ENV=local
         - HERMES_DASHBOARD=1
         - HERMES_PROFILE=docker
         - DASHBOARD_HOST=127.0.0.1
